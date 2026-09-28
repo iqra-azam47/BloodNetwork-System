@@ -1,0 +1,36 @@
+services:
+  # 1. ASP.NET Core 8 Web API Service
+  - type: web
+    name: bloodnetwork-backend
+    env: docker
+    dockerfilePath: backend/Dockerfile
+    region: frankfurt
+    plan: free
+    envVars:
+      - key: ConnectionStrings__DefaultConnection
+        sync: false # Set via Render dashboard with Neon DB URL
+      - key: Jwt__Key
+        generateValue: true
+      - key: Jwt__Issuer
+        value: BloodNetworkAPI
+      - key: Gemini__ApiKey
+        sync: false
+      - key: ASPNETCORE_ENVIRONMENT
+        value: Production
+
+  # 2. Next.js 14 Frontend Service
+  - type: web
+    name: bloodnetwork-frontend
+    env: node
+    region: frankfurt
+    plan: free
+    buildCommand: npm install && npm run build
+    startCommand: npm start
+    envVars:
+      - key: NEXT_PUBLIC_API_URL
+        fromService:
+          type: web
+          name: bloodnetwork-backend
+          property: host
+      - key: NODE_ENV
+        value: production
